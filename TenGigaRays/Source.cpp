@@ -85,11 +85,11 @@ void render_sample(float* workspace, hitable_list* world, camera* cam, int w, in
     }
 }
 
-void draw_canvas(uint8_t* canvas, const float* img, int w, int h)
+void draw_canvas(uint8_t* canvas, const float* img, int ssaa, float gamma, int w, int h)
 {
     for (int i = 0; i < w * h * 3; ++i)
     {
-        canvas[i] = static_cast<uint8_t>(255.f * img[i]);
+        canvas[i] = static_cast<uint8_t>(255.f * powf(img[i] / ssaa, 1 / gamma));
     }
 }
 
@@ -120,15 +120,7 @@ void first_projection()
         printf("%f %%\n", static_cast<float>(s) / static_cast<float>(SSAA) * 100.f);
     }
 
-    for (int i = 0; i < w * h * 3; ++i)
-    {
-		// apply average
-        result[i] /= static_cast<float>(SSAA);
-        // gamma
-		result[i] = sqrtf(result[i]);
-    }
-
-    draw_canvas(canvas, result, w, h);
+    draw_canvas(canvas, result, SSAA, 2, w, h);
     draw_png("proj_test.png", canvas, w, h);
 }
 
