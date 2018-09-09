@@ -123,13 +123,13 @@ void first_projection()
 			
 			for (int s = 0; s < SSAA / thd; ++s)
             {
-                render_sample(workspace, world, cam, w, h);
+                printf("[worker %d] %d/%d\n", i, s, SSAA / thd);
+             
+				render_sample(workspace, world, cam, w, h);
                 for (int j = 0; j < w * h * 3; ++j)
                 {
                     buffer[j] += workspace[j];
                 }
-
-				printf("[worker %d] %d/%d\n", i, s, SSAA/thd);
             }
 
 			return buffer;
