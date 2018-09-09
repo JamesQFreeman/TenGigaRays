@@ -122,7 +122,10 @@ void first_projection()
 
     for (int i = 0; i < w * h * 3; ++i)
     {
+		// apply average
         result[i] /= static_cast<float>(SSAA);
+        // gamma
+		result[i] = sqrtf(result[i]);
     }
 
     draw_canvas(canvas, result, w, h);
