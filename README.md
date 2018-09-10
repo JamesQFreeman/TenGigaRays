@@ -10,11 +10,11 @@
 
 光线跟踪算法产生的噪声理论上来说是随机噪声，假设其噪声亮度和位置平均分布，该噪声可被视为随机噪声（pepper noise）。因此我们尝试了中值滤波（median filter）和双边滤波器（Bilateral Filter）。
 
-[Filter Test](/pics/filter_test.png)
+![Filter Test](/pics/filter_test.png)
 
 测试发现，双边滤波器的观感更好，我们尝试了不同宽度的双边滤波器
 
-[Bilateral Filter Width Test](/pics/Bil_filter_test.png)
+![Bilateral Filter Width Test](/pics/Bil_filter_test.png)
 
 目前认为width=9时整体观感最佳。
 
