@@ -25,8 +25,8 @@ bool sphere::hit(const ray &ray, float t_min, float t_max, hit_record &rec) cons
     float s    = dot(l, ray_d);
     float l_sq = dot(l, l);
     float r_sq = radius * radius;
-    if (s * s < l_sq - r_sq)
-        return false; // ray does not points to sphere
+    if (s * s < l_sq - r_sq || l_sq < r_sq)
+        return false; // ray outside does not points to sphere
 
     float m_sq = l_sq - s * s;
     float q    = sqrtf(r_sq - m_sq);
