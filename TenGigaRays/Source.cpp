@@ -58,12 +58,13 @@ vec3 color(const ray& r, hitable* world_p, size_t depth)
     {
         auto light_src_material = metal(vec3(0.8, 0.8, 0.0), 0.5);
         if (sphere(vec3(-1, 10., -1), 0.5, &light_src_material).hit(r, 0.001, 99999.f, rec)) {
-            return vec3(10, 10, 10);
+            return vec3(.99, .99, .99);
         }
         else
         {
-            float t = 0.5 * (r.unit_direction().y() + 1.0);
-            return (1 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+            return vec3(0.4, 0.4, 0.4);
+            //float t = 0.5 * (r.unit_direction().y() + 1.0);
+            //return (1 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
         }
 
         //float t = 0.5*(r.unit_direction().y() + 1.0);
@@ -103,8 +104,8 @@ void first_projection()
     // Screen size and a screen buffers
     constexpr int w    = 800;
     constexpr int h    = 400;
-    constexpr int SSAA = 200;
-    constexpr int thd  = 4;
+    constexpr int SSAA = 2600;
+    constexpr int thd  = 20;
     static_assert(SSAA % thd == 0, "jobs must be evenly sliced!");
 
     auto canvas = new unsigned char[w * h * 3];
@@ -113,7 +114,7 @@ void first_projection()
     world->add_item(new sphere(vec3(0, -100.5, -1), 100, new lambertian(vec3(0.5, 0.5, 0.5))));
     world->add_item(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.8, 0.0), 0.4)));
     world->add_item(new sphere(vec3(0, 0., -1), 0.5, new lambertian(vec3(0.3, 0.8, 0.3))));
-
+    world->add_item(new sphere(vec3(-1, 0, -1), 0.5, new metal(vec3(0.8, 0.8, 0.0), 0.0)));
     std::vector<std::future<float*>> future_vec;
     for (int i = 0; i < thd; ++i)
     {

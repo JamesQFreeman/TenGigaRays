@@ -39,6 +39,12 @@
     <ClInclude Include="material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cuboid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
