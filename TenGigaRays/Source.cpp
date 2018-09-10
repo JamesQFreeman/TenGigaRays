@@ -15,20 +15,18 @@
 #include <memory>
 #include "material.h"
 
-void draw_png(const char* filename, const uint8_t* img, int w, int h)
-{
-    FILE* fp;
+void draw_png(const char *filename, const uint8_t *img, int w, int h) {
+    FILE *fp;
     fopen_s(&fp, filename, "wb");
     svpng(fp, w, h, img, 0);
     fclose(fp);
 }
 
-void test_rgb()
-{
+void test_rgb() {
     auto p   = new unsigned char[200 * 100 * 3];
     auto rgb = p;
     unsigned x, y;
-    FILE* fp;
+    FILE *fp;
     fopen_s(&fp, "rgbtest.png", "wb");
     for (y = 0; y < 100; y++)
         for (x = 0; x < 200; x++) {
@@ -40,28 +38,21 @@ void test_rgb()
     fclose(fp);
 }
 
-vec3 color(const ray& r, hitable* world_p, size_t depth)
-{
+vec3 color(const ray &r, hitable *world_p, size_t depth) {
     hit_record rec;
     if (world_p->hit(r, 0.001, 99999.0, rec)) {
         ray scattered;
         vec3 attenation;
         if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenation, scattered)) {
             return attenation * color(scattered, world_p, depth + 1);
-        }
-        else
-        {
+        } else {
             return vec3(0, 0, 0);
         }
-    }
-    else
-    {
+    } else {
         auto light_src_material = metal(vec3(0.8, 0.8, 0.0), 0.5);
         if (sphere(vec3(-1, 10., -1), 0.5, &light_src_material).hit(r, 0.001, 99999.f, rec)) {
             return vec3(.99, .99, .99);
-        }
-        else
-        {
+        } else {
             return vec3(0.4, 0.4, 0.4);
             //float t = 0.5 * (r.unit_direction().y() + 1.0);
             //return (1 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
@@ -73,8 +64,7 @@ vec3 color(const ray& r, hitable* world_p, size_t depth)
     }
 }
 
-void render_sample(float* workspace, hitable_list* world, camera* cam, int w, int h)
-{
+void render_sample(float *workspace, hitable_list *world, camera *cam, int w, int h) {
     auto p = workspace;
     for (int j = h - 1; j >= 0; j--) {
         for (int i = 0; i < w; i++) {
@@ -91,16 +81,13 @@ void render_sample(float* workspace, hitable_list* world, camera* cam, int w, in
     }
 }
 
-void draw_canvas(uint8_t* canvas, const float* img, int ssaa, float gamma, int w, int h)
-{
-    for (int i = 0; i < w * h * 3; ++i)
-    {
+void draw_canvas(uint8_t *canvas, const float *img, int ssaa, float gamma, int w, int h) {
+    for (int i = 0; i < w * h * 3; ++i) {
         canvas[i] = std::min(255, static_cast<int>(255.f * powf(img[i] / ssaa, 1 / gamma)));
     }
 }
 
-void first_projection()
-{
+void first_projection() {
     // Screen size and a screen buffers
     constexpr int w    = 800;
     constexpr int h    = 400;
@@ -115,38 +102,33 @@ void first_projection()
     world->add_item(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.8, 0.0), 0.4)));
     world->add_item(new sphere(vec3(0, 0., -1), 0.5, new lambertian(vec3(0.3, 0.8, 0.3))));
     world->add_item(new sphere(vec3(-1, 0, -1), 0.5, new metal(vec3(0.8, 0.8, 0.0), 0.0)));
-    std::vector<std::future<float*>> future_vec;
-    for (int i = 0; i < thd; ++i)
-    {
+    std::vector<std::future<float *>> future_vec;
+    for (int i = 0; i < thd; ++i) {
         auto future = std::async(std::launch::async, [=]() {
             auto buffer    = new float[w * h * 3]{};
             auto workspace = new float[w * h * 3];
-			
-			for (int s = 0; s < SSAA / thd; ++s)
-            {
+
+            for (int s = 0; s < SSAA / thd; ++s) {
                 printf("[worker %d] %d/%d\n", i, s, SSAA / thd);
-             
-				render_sample(workspace, world, cam, w, h);
-                for (int j = 0; j < w * h * 3; ++j)
-                {
+
+                render_sample(workspace, world, cam, w, h);
+                for (int j = 0; j < w * h * 3; ++j) {
                     buffer[j] += workspace[j];
                 }
             }
 
-			return buffer;
+            return buffer;
         });
 
         future_vec.push_back(std::move(future));
     }
 
     auto result = new float[w * h * 3]{};
-    for (auto& future : future_vec)
-    {
+    for (auto &future : future_vec) {
         future.wait();
-        
-		auto buffer = future.get();
-		for (int i = 0; i < w * h * 3; ++i)
-        {
+
+        auto buffer = future.get();
+        for (int i = 0; i < w * h * 3; ++i) {
             result[i] += buffer[i];
         }
     }
@@ -157,8 +139,7 @@ void first_projection()
     //printf("%f %%\n", static_cast<float>(s) / static_cast<float>(SSAA) * 100.f);
 }
 
-int main()
-{
+int main() {
     //generate_rand_list();
     //generate_rand_sphere_list();
     //test_rgb();
