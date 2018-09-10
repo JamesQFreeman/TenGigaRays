@@ -1,7 +1,7 @@
 BasedOnStyle: LLVM
 
 AllowShortIfStatementsOnASingleLine: false
-BreakBeforeBraces: Attach
+BreakBeforeBraces: Linux
 ColumnLimit: 0
 SortIncludes: false
 TabWidth: 4
