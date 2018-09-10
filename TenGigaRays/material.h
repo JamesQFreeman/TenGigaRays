@@ -1,9 +1,11 @@
 #pragma once
 #include "ray.h"
 #include "hitable.h"
-
+#include <random>
 float rand_() {
-    return (-1 + (float(rand()) / (float)RAND_MAX) * 2);
+    static thread_local auto rnd  = std::mt19937();
+    static thread_local auto dist = std::uniform_real_distribution<float>(-1.f, 1.f);
+    return dist(rnd);
 }
 
 vec3 random_in_unit_sphere() {

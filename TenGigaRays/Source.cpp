@@ -91,7 +91,7 @@ void first_projection() {
     // Screen size and a screen buffers
     constexpr int w    = 800;
     constexpr int h    = 400;
-    constexpr int SSAA = 2600;
+    constexpr int SSAA = 200;
     constexpr int thd  = 20;
     static_assert(SSAA % thd == 0, "jobs must be evenly sliced!");
 
