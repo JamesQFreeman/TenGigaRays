@@ -12,7 +12,7 @@ public:
     ray get_ray(float u, float v) {
         vec3 relative_point = lower_left_corner +
                               u * width + v * height;
-        return ray(origin, relative_point);
+        return ray(origin, relative_point-origin);
     }
 
     vec3 origin;
