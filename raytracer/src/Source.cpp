@@ -58,8 +58,8 @@ void render_sample(float *workspace, hitable *world, camera *cam, int w, int h) 
     auto p = workspace;
     for (int j = h - 1; j >= 0; j--) {
         for (int i = 0; i < w; i++) {
-            float u = float(i + (rand_() + 1.f) / 2.f) / float(w);
-            float v = float(j + (rand_() + 1.f) / 2.f) / float(h);
+            float u = float(i + (rand_mirror() + 1.f) / 2.f) / float(w);
+            float v = float(j + (rand_mirror() + 1.f) / 2.f) / float(h);
 
             auto ray   = cam->get_ray(u, v);
             auto pixel = color(ray, world, 0);

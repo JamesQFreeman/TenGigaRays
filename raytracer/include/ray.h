@@ -1,19 +1,22 @@
 #pragma once
-#include "vec3.h"
-class ray {
+#include "math_utils.h"
+class ray
+{
 public:
-    ray(const vec3 &o, const vec3 &d) {
-        origin = o;
-        direct = d;
+    ray() {}
+    ray(const vec3 &origin, const vec3 &direction)
+    {
+        origin_    = origin;
+        direction_ = direction;
     }
-    vec3 origin_point() const { return origin; }
-    vec3 direction() const { return direct; }
-    vec3 unit_direction() const { return unit_vector(direct); }
-    vec3 point_at_parameter(float t) const {
-        return origin + t * direct;
+    vec3 origin() const { return origin_; }
+    vec3 direction() const { return direction_; }
+    vec3 unit_direction() const { return direction_.unit_vector(); }
+    vec3 point_at_parameter(float t) const
+    {
+        return origin_ + t * direction_;
     }
-    ray(){};
-    ~ray(){};
-    vec3 origin;
-    vec3 direct;
+
+    vec3 origin_;
+    vec3 direction_;
 };
