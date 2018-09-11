@@ -9,8 +9,10 @@ public:
           lookup_(lookup), width_(width), height_(height),
           focus_(focus)
     {
-        vp_center = focus * (lookat - lookfrom).unit_vector();
-        vp_left   = width * cross(lookat, lookup.unit_vector());
+        auto vp_direction = (lookat - lookfrom).unit_vector();
+
+        vp_center = focus * vp_direction;
+        vp_left   = width * cross(vp_direction, lookup.unit_vector());
         vp_up     = height * lookup.unit_vector();
     }
 
