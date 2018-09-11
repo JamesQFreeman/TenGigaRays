@@ -4,7 +4,6 @@
 #include "hitable_list.h"
 #include "sphere.h"
 #include "camera.h"
-#include "pre_rand.h"
 #include <cstdlib>
 #include <random>
 #include <cmath>
@@ -16,8 +15,7 @@
 #include "material.h"
 
 void draw_png(const char *filename, const uint8_t *img, int w, int h) {
-    FILE *fp;
-    fopen_s(&fp, filename, "wb");
+    FILE *fp = fopen(filename, "wb");
     svpng(fp, w, h, img, 0);
     fclose(fp);
 }
@@ -26,8 +24,7 @@ void test_rgb() {
     auto p   = new unsigned char[200 * 100 * 3];
     auto rgb = p;
     unsigned x, y;
-    FILE *fp;
-    fopen_s(&fp, "rgbtest.png", "wb");
+    FILE *fp = fopen("rgbtest.png", "wb");
     for (y = 0; y < 100; y++)
         for (x = 0; x < 200; x++) {
             *p++ = (unsigned)x;
@@ -39,32 +36,25 @@ void test_rgb() {
 }
 
 vec3 color(const ray &r, hitable *world_p, size_t depth) {
+    if (depth > 20)
+        return vec3(0, 0, 0);
+
     hit_record rec;
     if (world_p->hit(r, 0.001, 99999.0, rec)) {
+        vec3 light;
+        if (rec.mat_ptr->emit(r, rec, light))
+            return light;
+
         ray scattered;
         vec3 attenation;
-        if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenation, scattered)) {
+        if (rec.mat_ptr->scatter(r, rec, attenation, scattered))
             return attenation * color(scattered, world_p, depth + 1);
-        } else {
-            return vec3(0, 0, 0);
-        }
-    } else {
-        auto light_src_material = metal(vec3(0.8, 0.8, 0.0), 0.5);
-        if (sphere(vec3(-1, 10., -1), 0.5, &light_src_material).hit(r, 0.001, 99999.f, rec)) {
-            return vec3(.99, .99, .99);
-        } else {
-            return vec3(0.4, 0.4, 0.4);
-            //float t = 0.5 * (r.unit_direction().y() + 1.0);
-            //return (1 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
-        }
-
-        //float t = 0.5*(r.unit_direction().y() + 1.0);
-        //float t = 2*powf(0.5,float(depth))*(r.unit_direction().y() + 1.0);
-        //return (1 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
     }
+
+    return vec3(0.2, 0.2, 0.2);
 }
 
-void render_sample(float *workspace, hitable_list *world, camera *cam, int w, int h) {
+void render_sample(float *workspace, hitable *world, camera *cam, int w, int h) {
     auto p = workspace;
     for (int j = h - 1; j >= 0; j--) {
         for (int i = 0; i < w; i++) {
@@ -87,21 +77,37 @@ void draw_canvas(uint8_t *canvas, const float *img, int ssaa, float gamma, int w
     }
 }
 
+hitable *create_world() {
+    auto world = new hitable_list;
+
+    // box
+    world->add_item(new sphere(vec3(0, 1e5 + 10, 0), 1e5, new lightsrc(vec3(3, 3, 3))));            // top
+    world->add_item(new sphere(vec3(0, -1e5 - 0.5, -1), 1e5, new lambertian(vec3(0.8, 0.8, 0.8)))); // bottom
+    world->add_item(new sphere(vec3(0, 0, -1e5 - 5), 1e5, new lambertian(vec3(0.2, 0.8, 0.2))));    // front
+    world->add_item(new sphere(vec3(0, 0, 1e5 + 5), 1e5, new lambertian(vec3(0.8, 0.8, 0.8))));     // back
+    world->add_item(new sphere(vec3(-1e5 - 3, 0, 0), 1e5, new lambertian(vec3(0.8, 0.2, 0.2))));    // left
+    world->add_item(new sphere(vec3(1e5 + 3, 0, 0), 1e5, new lambertian(vec3(0.2, 0.2, 0.8))));     // right
+
+    // balls
+    world->add_item(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.3, 0.8), 0.8)));
+    world->add_item(new sphere(vec3(0, 0., -1), 0.5, new lambertian(vec3(0.7, 0.3, 0.5))));
+    world->add_item(new sphere(vec3(-1, 0, -1), 0.5, new metal(vec3(0.8, 0.8, 0.0), 0.0)));
+
+    return world;
+}
+
 void first_projection() {
     // Screen size and a screen buffers
-    constexpr int w    = 800;
-    constexpr int h    = 400;
-    constexpr int SSAA = 200;
-    constexpr int thd  = 20;
+    constexpr int w    = 200;
+    constexpr int h    = 100;
+    constexpr int SSAA = 100;
+    constexpr int thd  = 4;
     static_assert(SSAA % thd == 0, "jobs must be evenly sliced!");
 
     auto canvas = new unsigned char[w * h * 3];
-    auto cam    = new camera;
-    auto world  = new hitable_list;
-    world->add_item(new sphere(vec3(0, -100.5, -1), 100, new lambertian(vec3(0.5, 0.5, 0.5))));
-    world->add_item(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.8, 0.0), 0.4)));
-    world->add_item(new sphere(vec3(0, 0., -1), 0.5, new lambertian(vec3(0.3, 0.8, 0.3))));
-    world->add_item(new sphere(vec3(-1, 0, -1), 0.5, new dielectric(0.1)));
+    auto cam    = new camera(vec3(0, 0, 3), vec3(0, 0, -1), vec3(0, 1, 0), 4, 2, 3);
+    auto world  = create_world();
+
     std::vector<std::future<float *>> future_vec;
     for (int i = 0; i < thd; ++i) {
         auto future = std::async(std::launch::async, [=]() {
@@ -135,14 +141,9 @@ void first_projection() {
 
     draw_canvas(canvas, result, SSAA, 2, w, h);
     draw_png("result.png", canvas, w, h);
-
-    //printf("%f %%\n", static_cast<float>(s) / static_cast<float>(SSAA) * 100.f);
 }
 
 int main() {
-    //generate_rand_list();
-    //generate_rand_sphere_list();
-    //test_rgb();
     first_projection();
     return 0;
 }

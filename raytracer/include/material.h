@@ -42,8 +42,31 @@ class material {
 public:
     material(){};
     ~material(){};
-    virtual bool scatter(const ray &r, const hit_record &rec,
-                         vec3 &attenuation, ray &scattered) const = 0;
+	virtual bool emit(const ray& r, const hit_record& rec, vec3& color) const
+	{
+        return false;
+	}
+
+	virtual bool scatter(const ray &r, const hit_record &rec,
+		vec3 &attenuation, ray &scattered) const
+	{
+        return false;
+	}
+};
+
+class lightsrc : public material
+{
+public:
+    lightsrc(const vec3 &light)
+        : light_(light) {}
+	bool emit(const ray& r, const hit_record& rec, vec3& light) const override
+	{
+        light = light_;
+        return true;
+	}
+
+private:
+    vec3 light_;
 };
 
 class lambertian : public material {

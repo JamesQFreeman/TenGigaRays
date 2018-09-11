@@ -1,24 +1,32 @@
 #pragma once
 #include "ray.h"
-class camera {
+class camera
+{
 public:
-    camera() {
-        lower_left_corner = vec3(-2, -1, -1);
-        width             = vec3(4, 0, 0);
-        height            = vec3(0, 2, 0);
-        origin            = vec3(0, 0, 2);
-    };
+    camera(vec3 origin, vec3 lookat, vec3 lookup, float width, float height,
+           float focus)
+        : origin(origin), lookat(unit_vector(lookat)),
+          lookup(unit_vector(lookup)), width(width), height(height),
+          focus(focus)
+    {
+        vp_center = focus * lookat;
+        vp_left   = cross(lookat, lookup) * width;
+        vp_up     = unit_vector(lookup) * height;
+    }
 
-    ray get_ray(float u, float v) {
-        vec3 relative_point = lower_left_corner +
-                              u * width + v * height;
-        return ray(origin, relative_point-origin);
+    ray get_ray(float u, float v)
+    {
+        return ray(origin, vp_center + (u - 0.5) * vp_left + (v - 0.5) * vp_up);
     }
 
     vec3 origin;
-    vec3 lower_left_corner;
-    vec3 width;
-    vec3 height;
+    vec3 lookat;
+    vec3 lookup;
+    float width;
+    float height;
+    float focus;
 
-    ~camera(){};
+    vec3 vp_center;
+    vec3 vp_left;
+    vec3 vp_up;
 };
