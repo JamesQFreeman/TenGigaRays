@@ -1,7 +1,8 @@
 #pragma once
-#include <hitable.h>
-#include <hitable_list.h>
-#include <material.h>
+#include "hitable.h"
+#include "hitable_list.h"
+#include "material.h"
+#include "aabb.h"
 #include <memory>
 #include <deque>
 #include <algorithm>
@@ -28,11 +29,18 @@ public:
     {
         return create_material<metal>(color, f);
     }
+    material *create_dielectric(float f)
+    {
+        return create_material<dielectric>(f);
+    }
 
     void add_sphere(float radius, vec3 center, material *mat)
     {
-        objects_.push_back(std::make_unique<sphere>(center, radius, mat));
-        collection_.add_item(objects_.back().get());
+        add_hitable<sphere>(center, radius, mat);
+    }
+    void add_aabb(vec3 min, vec3 max, material *mat)
+    {
+        add_hitable<aabb>(min, max, mat);
     }
 
 private:
@@ -41,6 +49,12 @@ private:
     {
         materials_.push_back(std::make_unique<TMat>(std::forward<TArgs>(args)...));
         return materials_.back().get();
+    }
+    template<typename TObj, typename ...TArgs>
+    void add_hitable(TArgs&& ...args)
+    {
+        objects_.push_back(std::make_unique<TObj>(std::forward<TArgs>(args)...));
+        collection_.add_item(objects_.back().get());
     }
 
     hitable_list collection_;
