@@ -13,14 +13,17 @@
 #include <future>
 #include <memory>
 #include "material.h"
+#include "world.h"
 
-void draw_png(const char *filename, const uint8_t *img, int w, int h) {
+void draw_png(const char *filename, const uint8_t *img, int w, int h)
+{
     FILE *fp = fopen(filename, "wb");
     svpng(fp, w, h, img, 0);
     fclose(fp);
 }
 
-void test_rgb() {
+void test_rgb()
+{
     auto p   = new unsigned char[200 * 100 * 3];
     auto rgb = p;
     unsigned x, y;
@@ -35,12 +38,13 @@ void test_rgb() {
     fclose(fp);
 }
 
-vec3 color(const ray &r, hitable *world_p, size_t depth) {
+vec3 color(const ray &r, world *world, size_t depth)
+{
     if (depth > 20)
         return vec3(0, 0, 0);
 
     hit_record rec;
-    if (world_p->hit(r, 0.001, 99999.0, rec)) {
+    if (world->hit(r, rec)) {
         vec3 light;
         if (rec.mat_ptr->emit(r, rec, light))
             return light;
@@ -48,18 +52,19 @@ vec3 color(const ray &r, hitable *world_p, size_t depth) {
         ray scattered;
         vec3 attenation;
         if (rec.mat_ptr->scatter(r, rec, attenation, scattered))
-            return attenation * color(scattered, world_p, depth + 1);
+            return attenation * color(scattered, world, depth + 1);
     }
 
     return vec3(0.2, 0.2, 0.2);
 }
 
-void render_sample(float *workspace, hitable *world, camera *cam, int w, int h) {
+void render_sample(float *workspace, world *world, camera *cam, int w, int h)
+{
     auto p = workspace;
     for (int j = h - 1; j >= 0; j--) {
         for (int i = 0; i < w; i++) {
-            float u = float(i + (rand_() + 1.f) / 2.f) / float(w);
-            float v = float(j + (rand_() + 1.f) / 2.f) / float(h);
+            float u = float(i + (rand_mirror() + 1.f) / 2.f) / float(w);
+            float v = float(j + (rand_mirror() + 1.f) / 2.f) / float(h);
 
             auto ray   = cam->get_ray(u, v);
             auto pixel = color(ray, world, 0);
@@ -71,32 +76,35 @@ void render_sample(float *workspace, hitable *world, camera *cam, int w, int h) 
     }
 }
 
-void draw_canvas(uint8_t *canvas, const float *img, int ssaa, float gamma, int w, int h) {
+void draw_canvas(uint8_t *canvas, const float *img, int ssaa, float gamma, int w, int h)
+{
     for (int i = 0; i < w * h * 3; ++i) {
         canvas[i] = std::min(255, static_cast<int>(255.f * powf(img[i] / ssaa, 1 / gamma)));
     }
 }
 
-hitable *create_world() {
-    auto world = new hitable_list;
+world *create_world()
+{
+    auto w = new world;
 
     // box
-    world->add_item(new sphere(vec3(0, 1e5 + 10, 0), 1e5, new lightsrc(vec3(3, 3, 3))));            // top
-    world->add_item(new sphere(vec3(0, -1e5 - 0.5, -1), 1e5, new lambertian(vec3(0.8, 0.8, 0.8)))); // bottom
-    world->add_item(new sphere(vec3(0, 0, -1e5 - 5), 1e5, new lambertian(vec3(0.2, 0.8, 0.2))));    // front
-    world->add_item(new sphere(vec3(0, 0, 1e5 + 5), 1e5, new lambertian(vec3(0.8, 0.8, 0.8))));     // back
-    world->add_item(new sphere(vec3(-1e5 - 3, 0, 0), 1e5, new lambertian(vec3(0.8, 0.2, 0.2))));    // left
-    world->add_item(new sphere(vec3(1e5 + 3, 0, 0), 1e5, new lambertian(vec3(0.2, 0.2, 0.8))));     // right
+    w->add_sphere(1e5, vec3(0, 1e5 + 5, 0), w->create_lightsrc(vec3(1., 1., 1.)));     // top
+    w->add_sphere(1e5, vec3(0, -1e5 - .5, -1), w->create_lambertian(vec3(.8, .8, .8))); // bottom
+    w->add_sphere(1e5, vec3(0, 0, -1e5 - 5), w->create_lambertian(vec3(.2, .8, .2)));   // front
+    w->add_sphere(1e5, vec3(0, 0, 1e5 + 5), w->create_lambertian(vec3(.8, .8, .8)));    // back
+    w->add_sphere(1e5, vec3(-1e5 - 3, 0, 0), w->create_lambertian(vec3(.8, .2, .2)));   // left
+    w->add_sphere(1e5, vec3(1e5 + 3, 0, 0), w->create_lambertian(vec3(.2, .2, .8)));    // right
 
     // balls
-    world->add_item(new sphere(vec3(1, 0, -1), 0.5, new metal(vec3(0.8, 0.3, 0.8), 0.8)));
-    world->add_item(new sphere(vec3(0, 0., -1), 0.5, new lambertian(vec3(0.7, 0.3, 0.5))));
-    world->add_item(new sphere(vec3(-1, 0, -1), 0.5, new metal(vec3(0.8, 0.8, 0.0), 0.0)));
+    w->add_sphere(.5, vec3(1, 0, -1), w->create_metal(vec3(.8, .3, .8), 0.8));
+    w->add_sphere(.5, vec3(0, 0, -1), w->create_lambertian(vec3(.7, .3, .5)));
+    w->add_sphere(.5, vec3(-1, 0, -1), w->create_metal(vec3(.8, .8, .0), 0.0));
 
-    return world;
+    return w;
 }
 
-void first_projection() {
+void first_projection()
+{
     // Screen size and a screen buffers
     constexpr int w    = 200;
     constexpr int h    = 100;
@@ -143,7 +151,8 @@ void first_projection() {
     draw_png("result.png", canvas, w, h);
 }
 
-int main() {
+int main()
+{
     first_projection();
     return 0;
 }

@@ -3,28 +3,30 @@
 class camera
 {
 public:
-    camera(vec3 origin, vec3 lookat, vec3 lookup, float width, float height,
+    camera(vec3 lookfrom, vec3 lookat, vec3 lookup, float width, float height,
            float focus)
-        : origin(origin), lookat(unit_vector(lookat)),
-          lookup(unit_vector(lookup)), width(width), height(height),
-          focus(focus)
+        : origin_(lookfrom), lookat_(lookat),
+          lookup_(lookup), width_(width), height_(height),
+          focus_(focus)
     {
-        vp_center = focus * lookat;
-        vp_left   = cross(lookat, lookup) * width;
-        vp_up     = unit_vector(lookup) * height;
+        auto vp_direction = (lookat - lookfrom).unit_vector();
+
+        vp_center = focus * vp_direction;
+        vp_left   = width * cross(vp_direction, lookup.unit_vector());
+        vp_up     = height * lookup.unit_vector();
     }
 
     ray get_ray(float u, float v)
     {
-        return ray(origin, vp_center + (u - 0.5) * vp_left + (v - 0.5) * vp_up);
+        return ray(origin_, vp_center + (u - 0.5) * vp_left + (v - 0.5) * vp_up);
     }
 
-    vec3 origin;
-    vec3 lookat;
-    vec3 lookup;
-    float width;
-    float height;
-    float focus;
+    vec3 origin_;
+    vec3 lookat_;
+    vec3 lookup_;
+    float width_;
+    float height_;
+    float focus_;
 
     vec3 vp_center;
     vec3 vp_left;
