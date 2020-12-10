@@ -1,5 +1,7 @@
 # TenGigaRays
 
+A very simple C++ ray tracing render.
+
 ## Todo:
 
 ### 2018/9/10
